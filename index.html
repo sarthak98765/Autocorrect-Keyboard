@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoCorrect Web App</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    textarea { width: 100%; height: 100px; padding: 10px; font-size: 16px; }
+    #suggestions { border: 1px solid #ccc; max-width: 400px; margin-top: 10px; padding: 10px; list-style: none; }
+    #suggestions li { padding: 5px; cursor: pointer; }
+    #suggestions li:hover { background-color: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>AutoCorrect Web App</h1>
+  <textarea id="inputBox" placeholder="Start typing..."></textarea>
+  <ul id="suggestions"></ul>
+
+  <script>
+    const inputBox = document.getElementById('inputBox');
+    const suggestionsBox = document.getElementById('suggestions');
+
+    let currentWord = '';
+
+    // Function to fetch suggestions from the backend
+    async function fetchSuggestions(word) {
+      if (!word) return;
+
+      try {
+        const response = await fetch(`http://localhost:5000/autocorrect?word=${word}`);
+        const suggestions = await response.json();
+
+        // Clear existing suggestions
+        suggestionsBox.innerHTML = '';
+
+        // Populate new suggestions
+        suggestions.forEach(suggestion => {
+          const li = document.createElement('li');
+          li.textContent = suggestion;
+          li.onclick = () => {
+            replaceCurrentWord(suggestion);
+          };
+          suggestionsBox.appendChild(li);
+        });
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+      }
+    }
+
+    // Event listener for key releases
+    inputBox.addEventListener('input', () => {
+      const text = inputBox.value;
+      const words = text.split(/\s+/);
+      currentWord = words[words.length - 1];
+
+      // Fetch suggestions if the user is typing
+      fetchSuggestions(currentWord);
+    });
+
+    // Replace the current word with a selected suggestion
+    function replaceCurrentWord(suggestion) {
+      const text = inputBox.value.split(/\s+/);
+      text[text.length - 1] = suggestion;
+      inputBox.value = text.join(' ') + ' ';
+      suggestionsBox.innerHTML = ''; // Clear suggestions
+    }
+  </script>
+</body>
+</html>
